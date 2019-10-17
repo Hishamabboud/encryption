@@ -1,0 +1,80 @@
+import string 
+a = "abcdefghijklmnopqrstuvwxyz "
+q = string.ascii_uppercase
+l = ",.:;'!?<>=+-_{}"
+r = "&#*"
+m = string.digits
+newmsg = ""
+def encrypt(newmsg):        
+    for i in b:
+        if  i == " ": 
+            newmsg += " "
+        elif i != " " and i != "x" and i != "y" and i != "z" and i not in l and i not in q and i not in m:      
+            y = a.find(i) #position
+            c = y + 3 #new index
+            o = a[c]     
+            newmsg += o
+        elif i in q and i != "X" and i != "Y" and i != "Z" and i not in m: 
+            oldpos = q.find(i)
+            nwpos = oldpos + 3
+            nwltr = q[nwpos]
+            newmsg += nwltr          
+        elif i == "x":
+            newmsg += "*"
+        elif i == "y": 
+            newmsg += "#"
+        elif i == "z":
+            newmsg += "&"
+        elif i in l: 
+            newmsg += i
+        elif i == "X":
+            newmsg += "<"
+        elif i == "Y":
+            newmsg += ">"
+        elif i == "Z":
+            newmsg += "}"
+        elif i in m: 
+            newmsg += i                              
+    print(newmsg,"\n Congrats your message has been encrypted")
+                              
+b = input("Type letter/word here:") #inputs letter or word
+encrypt(newmsg)
+
+def decrpyt(oldmsg):
+    for i in encrypted:
+        if i == " ": 
+            oldmsg += " "
+        elif i != " " and i not in l and i not in q and i not in m and i not in r:                           
+            z = a.find(i)
+            f = z - 3
+            t = a[f]
+            oldmsg += t
+        elif i in q and i not in l and i != " " and i not in m and i not in r: 
+            oldps = q.find(i)
+            nwps = oldps - 3
+            nwlt = q[nwps]
+            oldmsg += nwlt
+        elif i in m: 
+            oldmsg += i           
+        elif i == "*":
+            oldmsg += "x"
+        elif i == "#": 
+            oldmsg += "y"
+        elif i == "&":
+            oldmsg += "z"
+        elif i in l and i != "<" and i != ">" and i != "}": 
+            oldmsg += i
+        elif i == "<":
+            oldmsg += "X"
+        elif i == ">":
+            oldmsg += "Y"
+        elif i == "}":
+            oldmsg += "Z"
+                      
+    print(oldmsg,"\n Congrats your message has been decrypted")
+encrypted = input("Enter encrypted message here:")
+oldmsg = ""       
+decrpyt(oldmsg)        
+    
+                  
+    
