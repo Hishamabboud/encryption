@@ -1,24 +1,67 @@
-import string 
+import string
+import os
+import Crypto
+from Crypto.Cipher import AES 
+import base64
+import random
+import secrets 
+from cryptography.fernet import Fernet
+from _hashlib import new
+dig = string.digits
+up = string.ascii_uppercase
+low = string.ascii_lowercase 
 a = "abcdefghijklmnopqrstuvwxyz "
 q = string.ascii_uppercase
-l = ",.:;'!?<>=+-_{}"
+l = ",.:;'!?<>=+-_{}=="
 r = "&#*"
-m = string.digits
+m = "0123456789"
+iv = os.urandom(16)
+arry = []
+oddarry = []
+evenarry = []
 newmsg = ""
-def encrypt(newmsg):        
+key = []
+layer2key = Fernet.generate_key() #Generates key acc to crypto
+key3 = os.urandom(16) 
+b = input("Type letter/word here:")
+salt = secrets.token_bytes(1)
+
+def encrypt1(newmsg,key):
+    
+    strength = input("How strong do you want your key? Strong/Weak\n")
+    if strength == "Weak":
+        while len(key) < 4:
+            key.append(random.choice(low)) #Generates a random lowercase letter
+            key.append(random.choice(up))  #Generates a random uppercase letter
+            key.append(random.choice(dig)) #Generates a random digit   
+             
+        print("Your key has been generated:","".join(key))
+    elif strength == "Strong":
+        while len(key) < 8:  
+            key.append(random.choice(low)) #Generates a random lowercase letter
+            key.append(random.choice(up))  #Generates a random uppercase letter
+            key.append(random.choice(dig)) #Generates a random digit       
+        print("Your key has been generated:","".join(key))
+        
+    else: 
+        print("Choose between Weak and Strong!")
+        exit()    
+    
+#layer 1:    
+                        
     for i in b:
         if  i == " ": 
             newmsg += " "
         elif i != " " and i != "x" and i != "y" and i != "z" and i not in l and i not in q and i not in m:      
             y = a.find(i) #position
             c = y + 3 #new index
-            o = a[c]     
-            newmsg += o
-        elif i in q and i != "X" and i != "Y" and i != "Z" and i not in m: 
-            oldpos = q.find(i)
-            nwpos = oldpos + 3
-            nwltr = q[nwpos]
-            newmsg += nwltr          
+            o = a[c] #replacing the letter    
+            newmsg += o #forming the word
+        elif i in q and i != "X" and i != "Y" and i != "Z" and i not in dig: 
+            oldpos = q.find(i) #position
+            nwpos = oldpos + 3 #new index
+            nwltr = q[nwpos] #replacing the letter
+            newmsg += nwltr #forming the word          
         elif i == "x":
             newmsg += "*"
         elif i == "y": 
@@ -33,48 +76,87 @@ def encrypt(newmsg):
             newmsg += ">"
         elif i == "Z":
             newmsg += "}"
-        elif i in m: 
-            newmsg += i                              
-    print(newmsg,"\n Congrats your message has been encrypted")
-                              
-b = input("Type letter/word here:") #inputs letter or word
-encrypt(newmsg)
-
-def decrpyt(oldmsg):
-    for i in encrypted:
-        if i == " ": 
-            oldmsg += " "
-        elif i != " " and i not in l and i not in q and i not in m and i not in r:                           
-            z = a.find(i)
-            f = z - 3
-            t = a[f]
-            oldmsg += t
-        elif i in q and i not in l and i != " " and i not in m and i not in r: 
-            oldps = q.find(i)
-            nwps = oldps - 3
-            nwlt = q[nwps]
-            oldmsg += nwlt
-        elif i in m: 
-            oldmsg += i           
-        elif i == "*":
-            oldmsg += "x"
-        elif i == "#": 
-            oldmsg += "y"
-        elif i == "&":
-            oldmsg += "z"
-        elif i in l and i != "<" and i != ">" and i != "}": 
-            oldmsg += i
-        elif i == "<":
-            oldmsg += "X"
-        elif i == ">":
-            oldmsg += "Y"
-        elif i == "}":
-            oldmsg += "Z"
-                      
-    print(oldmsg,"\n Congrats your message has been decrypted")
-encrypted = input("Enter encrypted message here:")
-oldmsg = ""       
-decrpyt(oldmsg)        
+        elif i in dig: 
+            newmsg += i                                  
+    print("\n This is your encrypted message:",newmsg)
     
-                  
+#layer 2:
+     
+    Cipher2 = AES.new(key3,AES.MODE_CFB, iv)
+    byte = newmsg.encode('utf-8')
+    encrypted2 = Cipher2.encrypt(byte)
+    print("Layer 2: ", encrypted2)
+    sz = 2048
+    
+    with open(infile) as fin:
+        while True:
+            byte = fin.read(sz)
+            n = len(byte)
+            if n == 0:
+                break
+            elif n % 16 != 0:
+                byte += ' ' * (16 - n % 16) # padded with spaces
+            fout.write(encrypted2)
+    
+#layer 3:
+
+    cipher = Fernet(layer2key) #Assignes a variable to the cipher
+    encrypted3 = cipher.encrypt(encrypted2) #Encryptes the already encrypted message(encrypted2)
+    print("layer 3: ",encrypted3) #Prints newmsg with an added layer of encryption
+               
+encrypt1(newmsg, key) 
+            
+def decrypt(oldmsg,key):
+    ask = list(input("type key here:"))
+    if ask == key:
+        
+        encrypted3inpt = input("Type Layer 3 encrypted message here: ")
+        cipher = Fernet(layer2key)
+        byte3 = encrypted3inpt.encode('utf-8')
+        decrypted3 = cipher.decrypt(byte3)
+        print("Layer 3 removed: ", decrypted3)
+       
+        encrypted2inpt = input("Type Layer 2 encrypted message here: ")
+        bytes2 = encrypted2inpt.encode('utf-8')
+        decrypted = Cipher2.decrypt(bytes2)
+        print("Layer 2 removed: ",decrypted)
+        
+        encrypted = input("Enter encrypted message here (layer 1): ")
+        for i in encrypted:
+            if i == " ": 
+                oldmsg += " "
+            elif i != " " and i not in l and i not in q and i not in m and i not in r:                           
+                z = a.find(i)
+                f = z - 3
+                t = a[f]
+                oldmsg += t
+            elif i in q and i not in l and i != " " and i not in m and i not in r: 
+                oldps = q.find(i)
+                nwps = oldps - 3
+                nwlt = q[nwps]
+                oldmsg += nwlt
+            elif i in m: 
+                oldmsg += i           
+            elif i == "*":
+                oldmsg += "x"
+            elif i == "#": 
+                oldmsg += "y"
+            elif i == "&":
+                oldmsg += "z"
+            elif i in l and i != "<" and i != ">" and i != "}": 
+                oldmsg += i
+            elif i == "<":
+                oldmsg += "X"
+            elif i == ">":
+                oldmsg += "Y"
+            elif i == "}":
+                oldmsg += "Z"
+        print(oldmsg,"\n Congrats your message has been decrypted")        
+    elif ask != key: 
+        print("wrong key")
+
+oldmsg = ""
+
+decrypt(oldmsg, key)
+
     
